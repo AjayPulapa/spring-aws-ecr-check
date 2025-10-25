@@ -14,6 +14,7 @@ jobs:
       ECR_REPOSITORY: springboot-app
       CLUSTER_NAME: springboot-cluster
       SERVICE_NAME: springboot-service
+      TASK_FAMILY: springboot-task  # ensure this matches ecs-task-def.json
 
     steps:
       - name: Checkout source
@@ -47,7 +48,32 @@ jobs:
         run: |
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          
+
+      # 🟢 NEW: Ensure ECS service exists before deployment
+      - name: Ensure ECS service exists
+        run: |
+          echo "Checking if ECS service exists..."
+          SERVICE_STATUS=$(aws ecs describe-services \
+            --cluster $CLUSTER_NAME \
+            --services $SERVICE_NAME \
+            --region $AWS_REGION \
+            --query 'failures[0].reason' \
+            --output text || true)
+
+          if [ "$SERVICE_STATUS" = "MISSING" ]; then
+            echo "ECS service not found. Creating..."
+            aws ecs create-service \
+              --cluster $CLUSTER_NAME \
+              --service-name $SERVICE_NAME \
+              --task-definition $TASK_FAMILY \
+              --desired-count 1 \
+              --launch-type FARGATE \
+              --network-configuration "awsvpcConfiguration={subnets=[subnet-xxxxxx],securityGroups=[sg-xxxxxx],assignPublicIp=ENABLED}" \
+              --region $AWS_REGION
+          else
+            echo "ECS service already exists or is available."
+          fi
+
       - name: Deploy to ECS
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
         with:
