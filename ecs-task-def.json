@@ -1,5 +1,5 @@
 {
-  "family": "springboot-task",
+  "family": "springboot-task-definition",
   "networkMode": "awsvpc",
   "containerDefinitions": [
     {
