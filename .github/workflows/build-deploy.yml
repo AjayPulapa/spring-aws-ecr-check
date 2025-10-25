@@ -17,16 +17,22 @@ jobs:
         uses: actions/setup-java@v4
         with:
           java-version: '17'
-          distribution: 'zulu'  # Specify the distribution
+          distribution: 'zulu'
 
       - name: Build Spring Boot app
         run: mvn clean package -DskipTests
 
+      # 🟢 Add this step to configure AWS credentials
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
       - name: Log in to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
-        with:
-          region: 'us-east-1'  # Add your AWS region here
 
       - name: Build, Tag, and Push image to ECR
         env:
