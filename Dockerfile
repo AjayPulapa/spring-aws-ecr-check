@@ -1,4 +1,19 @@
-FROM openjdk:17
+# Stage 1: Build the application
+FROM maven:3.9.8-eclipse-temurin-17 AS build
+WORKDIR /app
+COPY pom.xml .
+COPY src ./src
+RUN mvn clean package -DskipTests
+
+# Stage 2: Run the application
+FROM eclipse-temurin:17-jdk
+WORKDIR /app
+
+# Copy JAR from the build stage
+COPY --from=build /app/target/*.jar app.jar
+
+# Expose the application port
 EXPOSE 8080
-ADD target/sample-service.jar sample-service.jar 
-ENTRYPOINT ["java","-jar","/sample-service.jar"]
+
+# Start the Spring Boot app
+ENTRYPOINT ["java", "-jar", "app.jar"]
