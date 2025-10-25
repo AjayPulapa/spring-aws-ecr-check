@@ -17,7 +17,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           java-version: '17'
-          distribution: 'zulu'  # Add this line to specify the distribution
+          distribution: 'zulu'  # Specify the distribution
 
       - name: Build Spring Boot app
         run: mvn clean package -DskipTests
@@ -25,6 +25,8 @@ jobs:
       - name: Log in to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
+        with:
+          region: 'us-east-1'  # Add your AWS region here
 
       - name: Build, Tag, and Push image to ECR
         env:
